@@ -19,6 +19,7 @@ export interface Topic {
   items: TopicItem[]
 }
 
+import { GRAPHS } from './topics/graphs/registry'
 import { SEARCHES } from './topics/searching/registry'
 import { ALGORITHMS } from './topics/sorting/registry'
 import { TREES } from './topics/trees/registry'
@@ -58,11 +59,11 @@ export const TOPICS: Topic[] = [
   },
   {
     id: 'graphs',
-    title: 'Graph traversal',
-    blurb: 'Breadth-first and depth-first search spreading through a graph.',
-    status: 'soon',
+    title: 'Graphs',
+    blurb: 'BFS and DFS (also on a grid you draw), topological sort, components, cycle detection and bipartite checks.',
+    status: 'live',
     accent: '#9b8cff',
-    items: ['Breadth-first search', 'Depth-first search', 'Topological sort', 'Connected components', 'Cycle detection'].map(item),
+    items: GRAPHS.map((a) => ({ id: a.id, name: a.name })),
   },
   {
     id: 'paths',

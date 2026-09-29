@@ -51,8 +51,8 @@ export function Home() {
             Watch algorithms <em>think</em>.
           </h1>
           <p className="hero-sub">
-            Sorting and searching algorithms visualized: every compare, swap and probe, animated one step at a time. Scrub back, slow
-            down, and read the Python, JavaScript or C++ code as it runs.
+            Sorting, searching, trees and graphs, visualized: every compare, swap, rotation and visit animated one step at a time.
+            Scrub back, slow down, and read the Python, JavaScript or C++ code as it runs.
           </p>
           <div className="hero-cta">
             <Link to="/sorting/bubble" className="solid-btn lg">
