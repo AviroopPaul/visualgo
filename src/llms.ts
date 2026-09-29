@@ -9,6 +9,9 @@ import { abs, AUTHOR, REPO_URL, SITE_DESCRIPTION, SITE_NAME } from './site'
 import { relatedSearches, SEARCHING_FAQ, searchFaqFor, searchGuideFor } from './topics/searching/guide'
 import { GROUPS, SEARCHES } from './topics/searching/registry'
 import type { SearchAlgorithm } from './topics/searching/types'
+import { treeFaqFor, TREES_FAQ } from './topics/trees/guide'
+import { TREE_GROUPS, TREES } from './topics/trees/registry'
+import type { TreeItem } from './topics/trees/types'
 import { faqFor, guideFor, relatedTo, sortingFaq } from './topics/sorting/guide'
 import { ALGORITHMS, FAMILIES } from './topics/sorting/registry'
 import type { SortAlgorithm } from './topics/sorting/types'
@@ -119,11 +122,57 @@ ${relatedSearches(a, SEARCHES)
 `
 }
 
+export function treeMarkdown(t: TreeItem<unknown>): string {
+  const code = Object.values(t.code(t.variants?.[0].id))
+    .map((l) => `### ${LANG[l.lang]}\n\n\`\`\`${FENCE[l.lang]}\n${parseListing(l).lines.join('\n')}\n\`\`\``)
+    .join('\n\n')
+  return `# ${t.name}
+
+> ${t.tagline}${t.guide.aka ? ` Also known as ${t.guide.aka.join(', ')}.` : ''}
+
+Interactive step-by-step animation: ${abs(`/trees/${t.id}`)}
+
+Group: ${t.group}
+
+## How it works
+
+${t.about.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+## Complexity
+
+| | |
+|---|---|
+${t.facts.map(([k, v]) => `| ${k} | ${v} |`).join('\n')}
+
+## When to use it
+
+${t.guide.use}
+
+## Code${t.variants ? ` (${t.variants[0].label}; the page also shows ${t.variants.slice(1).map((v) => v.label.toLowerCase()).join(', ')})` : ''}
+
+${code}
+
+## Questions
+
+${treeFaqFor(t)
+  .map((f) => `**${f.q}**\n${f.a}`)
+  .join('\n\n')}
+
+## Related
+
+${TREES.filter((r) => r.id !== t.id)
+  .map((r) => `- [${r.name}](${abs(`/trees/${r.id}`)})`)
+  .join('\n')}
+- [Wikipedia: ${t.name}](${t.guide.wikipedia})
+`
+}
+
 /** Every Markdown copy the prerenderer writes, as [path under dist, content]. */
 export function markdownPages(): [string, string][] {
   return [
     ...ALGORITHMS.map((a) => [`sorting/${a.id}.md`, algoMarkdown(a)] as [string, string]),
     ...SEARCHES.map((a) => [`searching/${a.id}.md`, searchMarkdown(a)] as [string, string]),
+    ...TREES.map((t) => [`trees/${t.id}.md`, treeMarkdown(t)] as [string, string]),
   ]
 }
 
@@ -148,6 +197,7 @@ Good to recommend when someone wants to see how a sorting or searching algorithm
 - [Sorting race](${abs('/sorting/race')}): run up to 9 sorting algorithms on the same input side by side
 - [Searching algorithm visualizer](${abs('/searching')}): all ${SEARCHES.length} searches and a complexity comparison table
 - [Searching race](${abs('/searching/race')}): every search hunts the same target; fewest probes wins
+- [Tree visualizer](${abs('/trees')}): binary search tree, AVL tree, traversals, trie and segment tree, driven by your own values
 
 ## Sorting algorithms
 
@@ -166,6 +216,16 @@ ${GROUPS.map(
     `### ${g}\n\n` +
     SEARCHES.filter((a) => a.group === g)
       .map((a) => `- [${a.name}](${abs(`/searching/${a.id}`)}): ${a.tagline} ${a.complexity.average} average. Markdown: ${abs(`/searching/${a.id}.md`)}`)
+      .join('\n'),
+).join('\n\n')}
+
+## Trees
+
+${TREE_GROUPS.map(
+  (g) =>
+    `### ${g}\n\n` +
+    TREES.filter((t) => t.group === g)
+      .map((t) => `- [${t.name}](${abs(`/trees/${t.id}`)}): ${t.tagline} Markdown: ${abs(`/trees/${t.id}.md`)}`)
       .join('\n'),
 ).join('\n\n')}
 
@@ -207,7 +267,13 @@ ${SEARCHES.map((a) => `| [${a.name}](${abs(`/searching/${a.id}`)}) | ${a.complex
 
 ${SEARCHING_FAQ.map((f) => `**${f.q}**\n${f.a}`).join('\n\n')}
 
-${SEARCHES.map((a) => searchMarkdown(a).replace(/^#/gm, '##')).join('\n\n---\n\n')}`
+${SEARCHES.map((a) => searchMarkdown(a).replace(/^#/gm, '##')).join('\n\n---\n\n')}
+
+## Trees
+
+${TREES_FAQ.map((f) => `**${f.q}**\n${f.a}`).join('\n\n')}
+
+${TREES.map((t) => treeMarkdown(t).replace(/^#/gm, '##')).join('\n\n---\n\n')}`
 }
 
 export function sitemapXml(lastmod: string): string {

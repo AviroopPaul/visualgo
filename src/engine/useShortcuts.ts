@@ -30,6 +30,8 @@ export function usePlayerShortcuts(player: Player, extra: Extra = {}) {
       else if (e.key === ']') p.setSpeed(Math.min(100, p.speed + 8))
       else if (e.key === '[') p.setSpeed(Math.max(0, p.speed - 8))
       else return
+      // Arrows, Home and End would otherwise also scroll the page.
+      e.preventDefault()
       if (target instanceof HTMLButtonElement || target instanceof HTMLInputElement) target.blur()
     }
     window.addEventListener('keydown', onKey)
