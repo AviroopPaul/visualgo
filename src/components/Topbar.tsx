@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
+import { REPO_URL } from '../site'
 import { GitHub } from './Icons'
 
-export const REPO_URL = 'https://github.com/AviroopPaul/visualgo'
 
 export function Wordmark() {
   return (

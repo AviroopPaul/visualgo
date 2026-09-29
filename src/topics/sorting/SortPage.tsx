@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CodePanel } from '../../components/CodePanel'
 import { Chevron, Code, Info, Shuffle, Sound } from '../../components/Icons'
 import { PlayerDock } from '../../components/PlayerDock'
+import { NotFound } from '../../pages/NotFound'
 import { randomSeed } from '../../engine/rng'
 import { blip } from '../../engine/sound'
 import { usePlayer } from '../../engine/usePlayer'
 import { MAX_N, MIN_N, makeInput, parseCustom, PRESETS, type Preset } from './input'
 import { ALGORITHMS, byId, FAMILIES, floorPow2, trace } from './registry'
+import { AlgoGuide } from './AlgoGuide'
 import { SortStage } from './SortStage'
 import { M, MARK_LABEL } from './tracer'
 import type { SortAlgorithm } from './types'
@@ -31,7 +33,7 @@ function store(key: string, v: unknown) {
 export function SortPage() {
   const { algo: algoId = '' } = useParams()
   const algo = byId(algoId)
-  if (!algo) return <Navigate to="/sorting/bubble" replace />
+  if (!algo) return <NotFound />
   return <SortView algo={algo} />
 }
 
@@ -104,102 +106,105 @@ function SortView({ algo }: { algo: SortAlgorithm }) {
   const trimmed = algo.pow2 && values.length !== floorPow2(values.length)
 
   return (
-    <div className={`sort-page${codeOpen ? ' with-code' : ''}`}>
-      <section className="algo-head">
-        <div className="algo-title">
-          <AlgoPicker current={algo} />
-          <p className="tagline">{algo.tagline}</p>
-        </div>
-        <div className="algo-meta">
-          <Chip k="avg" v={algo.complexity.average} />
-          <Chip k="best" v={algo.complexity.best} />
-          <Chip k="worst" v={algo.complexity.worst} />
-          <Chip k="space" v={algo.complexity.space} />
-          <span className={`flag ${algo.stable ? 'yes' : 'no'}`}>{algo.stable ? 'stable' : 'unstable'}</span>
-          <button className={`ghost-btn${aboutOpen ? ' on' : ''}`} onClick={() => setAboutOpen((o) => !o)}>
-            <Info /> How it works
-          </button>
-          <button className={`ghost-btn${codeOpen ? ' on' : ''}`} onClick={() => setCodeOpen((o) => !o)} title="Toggle code (C)">
-            <Code /> {codeOpen ? 'Hide code' : 'Show code'}
-          </button>
-        </div>
-        {aboutOpen && (
-          <ol className="about">
-            {algo.about.map((line, i) => (
-              <li key={i}>{line}</li>
-            ))}
-          </ol>
-        )}
-      </section>
+    <>
+      <div className={`sort-page${codeOpen ? ' with-code' : ''}`}>
+        <section className="algo-head">
+          <div className="algo-title">
+            <AlgoPicker current={algo} />
+            <p className="tagline">{algo.tagline}</p>
+          </div>
+          <div className="algo-meta">
+            <Chip k="avg" v={algo.complexity.average} />
+            <Chip k="best" v={algo.complexity.best} />
+            <Chip k="worst" v={algo.complexity.worst} />
+            <Chip k="space" v={algo.complexity.space} />
+            <span className={`flag ${algo.stable ? 'yes' : 'no'}`}>{algo.stable ? 'stable' : 'unstable'}</span>
+            <button className={`ghost-btn${aboutOpen ? ' on' : ''}`} onClick={() => setAboutOpen((o) => !o)}>
+              <Info /> How it works
+            </button>
+            <button className={`ghost-btn${codeOpen ? ' on' : ''}`} onClick={() => setCodeOpen((o) => !o)} title="Toggle code (C)">
+              <Code /> {codeOpen ? 'Hide code' : 'Show code'}
+            </button>
+          </div>
+          {aboutOpen && (
+            <ol className="about">
+              {algo.about.map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ol>
+          )}
+        </section>
 
-      <section className="work">
-        <div className="stage-wrap">
-          <SortStage run={run} frame={frame} duration={player.duration} done={done} />
-          <div className="caption">
-            <p key={player.index} className={`note${done ? ' is-done' : ''}`}>
-              {frame.note}
-            </p>
-            <div className="stats mono">
-              <span>
-                <b>{frame.cmp}</b> compares
-              </span>
-              <span>
-                <b>{frame.swaps}</b> swaps
-              </span>
-              <span>
-                <b>{frame.writes}</b> writes
-              </span>
+        <section className="work">
+          <div className="stage-wrap">
+            <SortStage run={run} frame={frame} duration={player.duration} done={done} />
+            <div className="caption">
+              <p key={player.index} className={`note${done ? ' is-done' : ''}`}>
+                {frame.note}
+              </p>
+              <div className="stats mono">
+                <span>
+                  <b>{frame.cmp}</b> compares
+                </span>
+                <span>
+                  <b>{frame.swaps}</b> swaps
+                </span>
+                <span>
+                  <b>{frame.writes}</b> writes
+                </span>
+              </div>
+            </div>
+            <div className="legend">
+              {legend.map((m) => (
+                <span key={m}>
+                  <i className={`sw m${m}`} /> {MARK_LABEL[m]}
+                </span>
+              ))}
+              {trimmed && <span className="warn">Trimmed to {run.n} (bitonic needs a power of two)</span>}
             </div>
           </div>
-          <div className="legend">
-            {legend.map((m) => (
-              <span key={m}>
-                <i className={`sw m${m}`} /> {MARK_LABEL[m]}
-              </span>
-            ))}
-            {trimmed && <span className="warn">Trimmed to {run.n} (bitonic needs a power of two)</span>}
-          </div>
-        </div>
-        {codeOpen && <CodePanel listings={[algo.code.py, algo.code.js, algo.code.cpp]} active={frame.line} onClose={() => setCodeOpen(false)} />}
-      </section>
+          {codeOpen && <CodePanel listings={[algo.code.py, algo.code.js, algo.code.cpp]} active={frame.line} onClose={() => setCodeOpen(false)} />}
+        </section>
 
-      <PlayerDock player={player}>
-        <div className="dock-input">
-          <label className="dock-size" title="Number of elements">
-            <span className="dim">Size</span>
-            <input
-              type="range"
-              min={MIN_N}
-              max={MAX_N}
-              value={customValues ? customValues.length : n}
-              onChange={(e) => update({ n: e.target.value, data: null })}
-              aria-label="Size"
-            />
-            <span className="mono dim">{customValues ? customValues.length : n}</span>
-          </label>
-          <select
-            className="select"
-            value={customValues ? 'custom' : preset}
-            onChange={(e) => (e.target.value === 'custom' ? null : update({ preset: e.target.value, data: null }))}
-            aria-label="Input shape"
-          >
-            {PRESETS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-            {customValues && <option value="custom">Custom</option>}
-          </select>
-          <CustomInput current={custom} onApply={(text) => update({ data: text })} />
-          <button className="icon-btn" onClick={shuffle} title="New random input (R)" aria-label="Shuffle">
-            <Shuffle />
-          </button>
-          <button className={`icon-btn${sound ? ' on' : ''}`} onClick={() => setSound((s) => !s)} title="Sound" aria-label="Toggle sound">
-            <Sound on={sound} />
-          </button>
-        </div>
-      </PlayerDock>
-    </div>
+        <PlayerDock player={player}>
+          <div className="dock-input">
+            <label className="dock-size" title="Number of elements">
+              <span className="dim">Size</span>
+              <input
+                type="range"
+                min={MIN_N}
+                max={MAX_N}
+                value={customValues ? customValues.length : n}
+                onChange={(e) => update({ n: e.target.value, data: null })}
+                aria-label="Size"
+              />
+              <span className="mono dim">{customValues ? customValues.length : n}</span>
+            </label>
+            <select
+              className="select"
+              value={customValues ? 'custom' : preset}
+              onChange={(e) => (e.target.value === 'custom' ? null : update({ preset: e.target.value, data: null }))}
+              aria-label="Input shape"
+            >
+              {PRESETS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+              {customValues && <option value="custom">Custom</option>}
+            </select>
+            <CustomInput current={custom} onApply={(text) => update({ data: text })} />
+            <button className="icon-btn" onClick={shuffle} title="New random input (R)" aria-label="Shuffle">
+              <Shuffle />
+            </button>
+            <button className={`icon-btn${sound ? ' on' : ''}`} onClick={() => setSound((s) => !s)} title="Sound" aria-label="Toggle sound">
+              <Sound on={sound} />
+            </button>
+          </div>
+        </PlayerDock>
+      </div>
+      <AlgoGuide algo={algo} />
+    </>
   )
 }
 

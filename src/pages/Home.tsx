@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import { TOPICS } from '../catalog'
 import { usePlayer } from '../engine/usePlayer'
 import { makeInput } from '../topics/sorting/input'
-import { MiniPreview } from '../topics/sorting/MiniPreview'
-import { ALGORITHMS, byId, FAMILIES, trace } from '../topics/sorting/registry'
+import { AUTHOR, REPO_URL } from '../site'
+import { AlgoCards } from '../topics/sorting/AlgoCards'
+import { ALGORITHMS, byId, trace } from '../topics/sorting/registry'
 import { SortStage } from '../topics/sorting/SortStage'
 
 const HERO_CYCLE = ['quick', 'merge', 'heap', 'radix', 'shell', 'insertion']
@@ -38,18 +39,19 @@ function HeroStage() {
 }
 
 export function Home() {
-  const [hover, setHover] = useState<string | null>(null)
   const soon = TOPICS.filter((t) => t.status === 'soon')
 
   return (
     <div className="home">
       <section className="hero">
         <div className="hero-copy">
+          <span className="family">Algorithm visualizer</span>
           <h1 className="hero-title">
             Watch algorithms <em>think</em>.
           </h1>
           <p className="hero-sub">
-            Every compare, swap and move, animated one step at a time. Scrub back, slow down, read the code as it runs.
+            Sorting algorithms visualized: every compare, swap and move, animated one step at a time. Scrub back, slow down, and read
+            the Python, JavaScript or C++ code as it runs.
           </p>
           <div className="hero-cta">
             <Link to="/sorting/bubble" className="solid-btn lg">
@@ -65,33 +67,12 @@ export function Home() {
 
       <section className="shelf" id="sorting">
         <header className="shelf-head">
-          <h2>Sorting</h2>
-          <span className="dim">{ALGORITHMS.length} algorithms · hover to preview</span>
+          <h2>Sorting algorithms</h2>
+          <span className="dim">
+            {ALGORITHMS.length} algorithms · hover to preview · <Link to="/sorting#complexity">compare complexity →</Link>
+          </span>
         </header>
-        {FAMILIES.map((f) => (
-          <div key={f} className="family-row">
-            <h3>{f}</h3>
-            <div className="cards">
-              {ALGORITHMS.filter((a) => a.family === f).map((a) => (
-                <Link
-                  key={a.id}
-                  to={`/sorting/${a.id}`}
-                  className="card"
-                  onMouseEnter={() => setHover(a.id)}
-                  onMouseLeave={() => setHover(null)}
-                  onFocus={() => setHover(a.id)}
-                  onBlur={() => setHover(null)}
-                >
-                  <MiniPreview algo={a} active={hover === a.id} />
-                  <div className="card-text">
-                    <strong>{a.name}</strong>
-                    <span className="mono dim">{a.complexity.average}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
+        <AlgoCards />
       </section>
 
       <section className="shelf" id="topics">
@@ -112,7 +93,10 @@ export function Home() {
       </section>
 
       <footer className="foot dim">
-        <span>visualgo</span>
+        <span>
+          visualgo is a free algorithm visualizer by <a href={AUTHOR.url}>{AUTHOR.name}</a> ·{' '}
+          <a href={REPO_URL}>source on GitHub</a>
+        </span>
         <span>Space play · ← → step · R shuffle · C code</span>
       </footer>
     </div>
