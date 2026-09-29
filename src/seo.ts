@@ -9,6 +9,8 @@ import { searchGuideFor } from './topics/searching/guide'
 import { searchById, SEARCHES } from './topics/searching/registry'
 import type { SearchAlgorithm } from './topics/searching/types'
 import { guideFor } from './topics/sorting/guide'
+import { TREES, treeById } from './topics/trees/registry'
+import type { TreeItem } from './topics/trees/types'
 import { ALGORITHMS, byId } from './topics/sorting/registry'
 import type { SortAlgorithm } from './topics/sorting/types'
 
@@ -37,6 +39,8 @@ export function allRoutes(): RouteEntry[] {
     { path: '/searching', priority: 0.9 },
     ...SEARCHES.map((a) => ({ path: `/searching/${a.id}`, priority: 0.8 })),
     { path: '/searching/race', priority: 0.7 },
+    { path: '/trees', priority: 0.9 },
+    ...TREES.map((t) => ({ path: `/trees/${t.id}`, priority: 0.8 })),
     // Planned topics render a placeholder; kept out of the index until they ship.
     ...TOPICS.filter((t) => t.status === 'soon').map((t) => ({ path: `/${t.id}` })),
   ]
@@ -104,6 +108,13 @@ function learningHead(p: LearningPage): Head {
   }
 }
 
+export function treeDescription(t: TreeItem<unknown>) {
+  return `${t.name} visualization: ${sentence(t.tagline)}. Insert, search and delete your own values and watch every step animated, with Python, JavaScript and C++ code.`
+}
+
+const treeHead = (t: TreeItem<unknown>) =>
+  learningHead({ path: `/trees/${t.id}`, name: t.name, description: treeDescription(t), aka: t.guide.aka, wikipedia: t.guide.wikipedia, topic: ['Trees', '/trees'] })
+
 const algoHead = (a: SortAlgorithm) => {
   const g = guideFor(a)
   return learningHead({ path: `/sorting/${a.id}`, name: a.name, description: algoDescription(a), aka: g.aka, wikipedia: g.wikipedia, topic: ['Sorting', '/sorting'] })
@@ -167,7 +178,7 @@ export function headFor(pathname: string): Head {
   if (path === '/') {
     return {
       title: `Algorithm Visualizer: See Algorithms Animated Step by Step | ${SITE_NAME}`,
-      description: `${SITE_NAME} is a free, interactive algorithm visualizer. Watch ${ALGORITHMS.length} sorting and ${SEARCHES.length} searching algorithms animate step by step, race them side by side, and follow Python, JavaScript and C++ code line by line.`,
+      description: `${SITE_NAME} is a free, interactive algorithm visualizer. Watch ${ALGORITHMS.length} sorting and ${SEARCHES.length} searching algorithms and ${TREES.length} tree structures animate step by step, race them side by side, and follow Python, JavaScript and C++ code line by line.`,
       canonical: abs('/'),
       jsonLd: [
         { ...website, description: SITE_DESCRIPTION, inLanguage: 'en', publisher: author },
@@ -185,6 +196,7 @@ export function headFor(pathname: string): Head {
           featureList: [
             `${ALGORITHMS.length} animated sorting algorithms`,
             `${SEARCHES.length} animated searching algorithms, including binary and interpolation search`,
+            'Interactive binary search tree, AVL tree, trie and segment tree with your own values',
             'Step forward and backward through every compare, swap and write',
             'Race mode: run several sorting or searching algorithms on the same input',
             'Python, JavaScript and C++ code synced to the animation',
@@ -240,6 +252,20 @@ export function headFor(pathname: string): Head {
       topic: ['Searching', '/searching'],
     })
   }
+
+  if (path === '/trees') {
+    return hubHead({
+      path,
+      title: `Tree Visualizer: BST, AVL, Trie and Segment Tree Animated | ${SITE_NAME}`,
+      description: `Visualize binary search trees, AVL tree rotations, in-order / pre-order / post-order / level-order traversal, tries and segment trees. Insert and delete your own values, step by step.`,
+      name: 'Tree data structure visualizer',
+      items: TREES.map((t) => ({ name: t.name, path: `/trees/${t.id}` })),
+      topic: 'Trees',
+    })
+  }
+
+  const tree = path.startsWith('/trees/') ? treeById(path.slice('/trees/'.length)) : undefined
+  if (tree) return treeHead(tree)
 
   const search = path.startsWith('/searching/') ? searchById(path.slice('/searching/'.length)) : undefined
   if (search) return searchHead(search)

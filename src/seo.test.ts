@@ -5,6 +5,7 @@ import { SITE_URL } from './site'
 import { SEARCH_GUIDE } from './topics/searching/guide'
 import { SEARCHES } from './topics/searching/registry'
 import { GUIDE } from './topics/sorting/guide'
+import { TREES } from './topics/trees/registry'
 import { ALGORITHMS } from './topics/sorting/registry'
 
 const indexable = allRoutes().filter((r) => r.priority != null)
@@ -30,6 +31,7 @@ describe('seo', () => {
     for (const { path } of allRoutes().filter((r) => r.priority == null)) expect(headFor(path).noindex, path).toBe(true)
     expect(headFor('/sorting/nope').noindex).toBe(true)
     expect(headFor('/searching/nope').noindex).toBe(true)
+    expect(headFor('/trees/nope').noindex).toBe(true)
     expect(headHtml(headFor('/nope'))).not.toContain('rel="canonical"')
   })
 
@@ -45,12 +47,15 @@ describe('seo', () => {
     for (const a of ALGORITHMS) expect(txt).toContain(`${SITE_URL}/sorting/${a.id}`)
     for (const a of SEARCHES) expect(txt).toContain(`${SITE_URL}/searching/${a.id}`)
     for (const a of SEARCHES) expect(llmsFullTxt()).toContain(`## ${a.name}`)
+    for (const t of TREES) expect(txt).toContain(`${SITE_URL}/trees/${t.id}`)
+    for (const t of TREES) expect(llmsFullTxt()).toContain(`## ${t.name}`)
   })
 
   it('writes a Markdown copy of every algorithm page', () => {
     const paths = markdownPages().map(([p]) => p)
     for (const a of ALGORITHMS) expect(paths).toContain(`sorting/${a.id}.md`)
     for (const a of SEARCHES) expect(paths).toContain(`searching/${a.id}.md`)
+    for (const t of TREES) expect(paths).toContain(`trees/${t.id}.md`)
     expect(new Set(paths).size).toBe(paths.length)
   })
 })

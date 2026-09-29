@@ -21,6 +21,7 @@ export interface Topic {
 
 import { SEARCHES } from './topics/searching/registry'
 import { ALGORITHMS } from './topics/sorting/registry'
+import { TREES } from './topics/trees/registry'
 
 export const TOPICS: Topic[] = [
   {
@@ -42,10 +43,10 @@ export const TOPICS: Topic[] = [
   {
     id: 'trees',
     title: 'Trees',
-    blurb: 'Binary search trees, self-balancing rotations and every traversal order.',
-    status: 'soon',
+    blurb: 'Binary search trees, AVL rotations, every traversal order, tries and segment trees.',
+    status: 'live',
     accent: '#35e0a1',
-    items: ['Binary search tree', 'Traversals (in / pre / post / level)', 'AVL tree', 'Red–black tree', 'Trie', 'Segment tree'].map(item),
+    items: TREES.map((t) => ({ id: t.id, name: t.name })),
   },
   {
     id: 'heaps',
