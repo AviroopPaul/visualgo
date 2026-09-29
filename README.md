@@ -8,15 +8,20 @@ Visualize [bubble sort](https://visualgo-lac.vercel.app/sorting/bubble), [insert
 
 An independent project, not affiliated with VisuAlgo (visualgo.net).
 
-**Live now: sorting.** 19 algorithms, a race mode, custom input, sound, and Python, JavaScript and C++ code synced to the animation (Python by default).
-**Next:** searching, trees, heaps, BFS / DFS, shortest paths & MST, linear structures, hashing, dynamic programming (placeholders are already in the app).
+**Live now**
+- **Sorting:** 19 algorithms, race mode, custom input, sound.
+- **Searching:** linear, jump, binary, ternary, exponential and interpolation search. Click any bar to hunt for its value; race them by probe count.
+
+Every algorithm comes with Python, JavaScript and C++ code synced to the animation (Python by default).
+
+**Next:** trees, BFS / DFS, heaps, shortest paths & MST, linear structures, hashing, dynamic programming (placeholders are already in the app).
 
 ## Run it
 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm test         # every algorithm × every input shape × many sizes, plus the shown code itself
+npm test         # every algorithm on many inputs, plus the shown Python / JS / C++ code actually run
 npm run build
 ```
 
@@ -29,9 +34,12 @@ Nothing is animated live. Each algorithm runs once against a **tracer**, which r
 ```
 src/
   engine/            topic-agnostic: Frame type, usePlayer, code-label parser, highlighter, sound, seeded RNG
-  components/        PlayerDock, CodePanel, Topbar, icons
-  catalog.ts         every topic, live or planned (drives the home page)
+  components/        PlayerDock, CodePanel, AlgoHeader (picker + chips), RaceLayout, Topbar
+  catalog.ts         every topic, live or planned (drives the Topics menu and "coming next")
+  test/runners.ts    runs Python / C++ listings in tests (skipped if python3 / clang++ are missing)
   topics/
+    index.ts         live topic modules: routes + home-page shelf
+    searching/       SearchTracer, SearchStage (probe beams, window, target line), 6 algorithms
     sorting/
       tracer.ts      records SortFrames (main row, scratch row, buckets, heap size, pointers)
       SortStage.tsx  draws a frame: bars, scratch tray, buckets, heap tree
@@ -43,7 +51,7 @@ src/
 
 ### Code ↔ animation sync
 
-Listings are plain strings whose lines end with `// @label` (`# @label` in Python). The tracer tags each frame with a label; the code panel strips the markers and highlights the matching line. Tests check that every label an algorithm emits exists in all three listings, and that the JS listings really sort (Python and C++ were checked the same way when written).
+Listings are plain strings whose lines end with `// @label` (`# @label` in Python). The tracer tags each frame with a label; the code panel strips the markers and highlights the matching line. Tests check that every label an algorithm emits exists in all three listings, and they execute all three listings (C++ with `-Wall -Wextra -Werror`) to prove the code shown really works.
 
 ### Adding a sorting algorithm
 
@@ -53,9 +61,10 @@ Listings are plain strings whose lines end with `// @label` (`# @label` in Pytho
 ### Adding a new topic (trees, graphs, …)
 
 1. Build it under `src/topics/<topic>/`: a tracer that emits frames extending `engine/types.ts#Frame`, and a stage component that draws one frame.
-2. Reuse `usePlayer`, `PlayerDock` and `CodePanel` from the engine.
-3. Flip the topic to `status: 'live'` in `catalog.ts` and register its routes in `App.tsx`.
-4. Add its URLs to `allRoutes()` and its titles, descriptions and JSON-LD to `headFor()` in `src/seo.ts`. `npm test` fails if an indexable page is missing unique metadata.
+2. Reuse `usePlayer`, `usePlayerShortcuts`, `PlayerDock`, `AlgoHeader`, `CodePanel` and `RaceLayout`.
+3. Export a `TopicModule` (routes + `Shelf`) from `src/topics/<topic>/index.tsx` and add it to `src/topics/index.ts`.
+4. Flip the topic to `status: 'live'` in `catalog.ts`. Home, the top bar and routing pick it up.
+5. Add its URLs to `allRoutes()` and its titles, descriptions and JSON-LD to `headFor()` in `src/seo.ts`. `npm test` fails if an indexable page is missing unique metadata.
 
 ## Search engines and AI agents
 

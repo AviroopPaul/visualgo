@@ -19,6 +19,7 @@ export interface Topic {
   items: TopicItem[]
 }
 
+import { SEARCHES } from './topics/searching/registry'
 import { ALGORITHMS } from './topics/sorting/registry'
 
 export const TOPICS: Topic[] = [
@@ -33,10 +34,10 @@ export const TOPICS: Topic[] = [
   {
     id: 'searching',
     title: 'Searching',
-    blurb: 'Finding one value fast: linear, binary, jump and interpolation search.',
-    status: 'soon',
+    blurb: 'Hunting for one value: linear, jump, binary, ternary, exponential and interpolation search.',
+    status: 'live',
     accent: '#3fc6ff',
-    items: ['Linear search', 'Binary search', 'Jump search', 'Interpolation search', 'Exponential search'].map(item),
+    items: SEARCHES.map((a) => ({ id: a.id, name: a.name })),
   },
   {
     id: 'trees',

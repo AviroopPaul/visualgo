@@ -5,6 +5,9 @@
  */
 import { TOPICS, topicById } from './catalog'
 import { abs, AUTHOR, OG_IMAGE, REPO_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from './site'
+import { searchGuideFor } from './topics/searching/guide'
+import { searchById, SEARCHES } from './topics/searching/registry'
+import type { SearchAlgorithm } from './topics/searching/types'
 import { guideFor } from './topics/sorting/guide'
 import { ALGORITHMS, byId } from './topics/sorting/registry'
 import type { SortAlgorithm } from './topics/sorting/types'
@@ -31,6 +34,9 @@ export function allRoutes(): RouteEntry[] {
     { path: '/sorting', priority: 0.9 },
     ...ALGORITHMS.map((a) => ({ path: `/sorting/${a.id}`, priority: 0.8 })),
     { path: '/sorting/race', priority: 0.7 },
+    { path: '/searching', priority: 0.9 },
+    ...SEARCHES.map((a) => ({ path: `/searching/${a.id}`, priority: 0.8 })),
+    { path: '/searching/race', priority: 0.7 },
     // Planned topics render a placeholder; kept out of the index until they ship.
     ...TOPICS.filter((t) => t.status === 'soon').map((t) => ({ path: `/${t.id}` })),
   ]
@@ -48,40 +54,109 @@ function breadcrumbs(items: [string, string][]) {
   }
 }
 
+const sentence = (tagline: string) => tagline.charAt(0).toLowerCase() + tagline.slice(1).replace(/\.$/, '')
+
 export function algoDescription(a: SortAlgorithm) {
-  return `${a.name} visualization: ${a.tagline.charAt(0).toLowerCase() + a.tagline.slice(1).replace(/\.$/, '')}. Watch every compare and swap animated step by step, with Python, JavaScript and C++ code. ${a.complexity.average} average.`
+  return `${a.name} visualization: ${sentence(a.tagline)}. Watch every compare and swap animated step by step, with Python, JavaScript and C++ code. ${a.complexity.average} average.`
 }
 
-function algoHead(a: SortAlgorithm): Head {
-  const g = guideFor(a)
-  const url = abs(`/sorting/${a.id}`)
+export function searchDescription(a: SearchAlgorithm) {
+  return `${a.name} visualization: ${sentence(a.tagline)}. Watch every probe animated step by step on a sorted array, with Python, JavaScript and C++ code. ${a.complexity.average} average.`
+}
+
+interface LearningPage {
+  path: string
+  name: string
+  description: string
+  aka?: string[]
+  wikipedia: string
+  /** Topic breadcrumb, e.g. ["Sorting", "/sorting"]. */
+  topic: [string, string]
+}
+
+/** Head for one algorithm page (any topic). */
+function learningHead(p: LearningPage): Head {
+  const url = abs(p.path)
   return {
-    title: `${titleCase(a.name)} Visualization: Step-by-Step Animation | ${SITE_NAME}`,
-    description: algoDescription(a),
+    title: `${titleCase(p.name)} Visualization: Step-by-Step Animation | ${SITE_NAME}`,
+    description: p.description,
     canonical: url,
     jsonLd: [
       {
         '@type': 'LearningResource',
-        name: `${a.name} visualization`,
-        headline: `${a.name}, animated step by step`,
-        description: algoDescription(a),
+        name: `${p.name} visualization`,
+        headline: `${p.name}, animated step by step`,
+        description: p.description,
         url,
         image: OG_IMAGE,
         inLanguage: 'en',
         isAccessibleForFree: true,
         learningResourceType: ['Interactive visualization', 'Simulation'],
         educationalUse: 'Self-study',
-        teaches: `How ${a.name.toLowerCase()} works, its time and space complexity, and how to implement it`,
-        about: { '@type': 'Thing', name: a.name, alternateName: g.aka, sameAs: g.wikipedia },
+        teaches: `How ${p.name.toLowerCase()} works, its time and space complexity, and how to implement it`,
+        about: { '@type': 'Thing', name: p.name, alternateName: p.aka, sameAs: p.wikipedia },
         programmingLanguage: ['Python', 'JavaScript', 'C++'],
         isPartOf: { '@id': `${SITE_URL}/#website` },
         author,
       },
+      breadcrumbs([[SITE_NAME, '/'], p.topic, [p.name, p.path]]),
+    ],
+  }
+}
+
+const algoHead = (a: SortAlgorithm) => {
+  const g = guideFor(a)
+  return learningHead({ path: `/sorting/${a.id}`, name: a.name, description: algoDescription(a), aka: g.aka, wikipedia: g.wikipedia, topic: ['Sorting', '/sorting'] })
+}
+
+const searchHead = (a: SearchAlgorithm) => {
+  const g = searchGuideFor(a)
+  return learningHead({ path: `/searching/${a.id}`, name: a.name, description: searchDescription(a), aka: g.aka, wikipedia: g.wikipedia, topic: ['Searching', '/searching'] })
+}
+
+/** A topic overview page listing its algorithms. */
+function hubHead(o: { path: string; title: string; description: string; name: string; items: { name: string; path: string }[]; topic: string }): Head {
+  return {
+    title: o.title,
+    description: o.description,
+    canonical: abs(o.path),
+    jsonLd: [
+      {
+        '@type': 'CollectionPage',
+        name: o.name,
+        url: abs(o.path),
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: o.items.length,
+          itemListElement: o.items.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, url: abs(it.path) })),
+        },
+      },
       breadcrumbs([
         [SITE_NAME, '/'],
-        ['Sorting', '/sorting'],
-        [a.name, `/sorting/${a.id}`],
+        [o.topic, o.path],
       ]),
+    ],
+  }
+}
+
+/** A race page. */
+function raceHead(o: { path: string; title: string; description: string; name: string; topic: [string, string] }): Head {
+  return {
+    title: o.title,
+    description: o.description,
+    canonical: abs(o.path),
+    jsonLd: [
+      {
+        '@type': 'LearningResource',
+        name: o.name,
+        url: abs(o.path),
+        learningResourceType: 'Interactive visualization',
+        isAccessibleForFree: true,
+        isPartOf: { '@id': `${SITE_URL}/#website` },
+        author,
+      },
+      breadcrumbs([[SITE_NAME, '/'], o.topic, ['Race', o.path]]),
     ],
   }
 }
@@ -92,7 +167,7 @@ export function headFor(pathname: string): Head {
   if (path === '/') {
     return {
       title: `Algorithm Visualizer: See Algorithms Animated Step by Step | ${SITE_NAME}`,
-      description: `${SITE_NAME} is a free, interactive algorithm visualizer. Watch ${ALGORITHMS.length} sorting algorithms animate step by step, race them side by side, and follow Python, JavaScript and C++ code line by line.`,
+      description: `${SITE_NAME} is a free, interactive algorithm visualizer. Watch ${ALGORITHMS.length} sorting and ${SEARCHES.length} searching algorithms animate step by step, race them side by side, and follow Python, JavaScript and C++ code line by line.`,
       canonical: abs('/'),
       jsonLd: [
         { ...website, description: SITE_DESCRIPTION, inLanguage: 'en', publisher: author },
@@ -109,8 +184,9 @@ export function headFor(pathname: string): Head {
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
           featureList: [
             `${ALGORITHMS.length} animated sorting algorithms`,
+            `${SEARCHES.length} animated searching algorithms, including binary and interpolation search`,
             'Step forward and backward through every compare, swap and write',
-            'Race mode: run several sorting algorithms on the same input',
+            'Race mode: run several sorting or searching algorithms on the same input',
             'Python, JavaScript and C++ code synced to the animation',
             'Custom input, input presets and sound',
           ],
@@ -122,59 +198,51 @@ export function headFor(pathname: string): Head {
   }
 
   if (path === '/sorting') {
-    return {
+    return hubHead({
+      path,
       title: `Sorting Algorithm Visualizer: ${ALGORITHMS.length} Algorithms Animated | ${SITE_NAME}`,
       description: `Visualize ${ALGORITHMS.length} sorting algorithms: bubble, insertion, selection, merge, quick, heap, radix, counting, shell, TimSort and more. Animated step by step, with a time complexity comparison table.`,
-      canonical: abs('/sorting'),
-      jsonLd: [
-        {
-          '@type': 'CollectionPage',
-          name: 'Sorting algorithm visualizer',
-          url: abs('/sorting'),
-          isPartOf: { '@id': `${SITE_URL}/#website` },
-          mainEntity: {
-            '@type': 'ItemList',
-            numberOfItems: ALGORITHMS.length,
-            itemListElement: ALGORITHMS.map((a, i) => ({
-              '@type': 'ListItem',
-              position: i + 1,
-              name: a.name,
-              url: abs(`/sorting/${a.id}`),
-            })),
-          },
-        },
-        breadcrumbs([
-          [SITE_NAME, '/'],
-          ['Sorting', '/sorting'],
-        ]),
-      ],
-    }
+      name: 'Sorting algorithm visualizer',
+      items: ALGORITHMS.map((a) => ({ name: a.name, path: `/sorting/${a.id}` })),
+      topic: 'Sorting',
+    })
   }
 
   if (path === '/sorting/race') {
-    return {
+    return raceHead({
+      path,
       title: `Sorting Algorithm Race: Compare Sorts Side by Side | ${SITE_NAME}`,
       description:
         'Race up to 9 sorting algorithms on the same input and watch which finishes first. Compare bubble, insertion, merge, quick, heap sort and more on random, nearly sorted, reversed or few-unique data.',
-      canonical: abs('/sorting/race'),
-      jsonLd: [
-        {
-          '@type': 'LearningResource',
-          name: 'Sorting algorithm race',
-          url: abs('/sorting/race'),
-          learningResourceType: 'Interactive visualization',
-          isAccessibleForFree: true,
-          isPartOf: { '@id': `${SITE_URL}/#website` },
-          author,
-        },
-        breadcrumbs([
-          [SITE_NAME, '/'],
-          ['Sorting', '/sorting'],
-          ['Race', '/sorting/race'],
-        ]),
-      ],
-    }
+      name: 'Sorting algorithm race',
+      topic: ['Sorting', '/sorting'],
+    })
   }
+
+  if (path === '/searching') {
+    return hubHead({
+      path,
+      title: `Searching Algorithm Visualizer: Binary Search and More | ${SITE_NAME}`,
+      description: `Visualize ${SEARCHES.length} searching algorithms: linear, binary, jump, ternary, exponential and interpolation search. Watch every probe on a sorted array, with a complexity comparison table.`,
+      name: 'Searching algorithm visualizer',
+      items: SEARCHES.map((a) => ({ name: a.name, path: `/searching/${a.id}` })),
+      topic: 'Searching',
+    })
+  }
+
+  if (path === '/searching/race') {
+    return raceHead({
+      path,
+      title: `Search Algorithm Race: Binary vs Linear vs Interpolation | ${SITE_NAME}`,
+      description:
+        'Race linear, jump, binary, ternary, exponential and interpolation search for the same target in the same sorted array. Fewest probes wins; try skewed data to see interpolation search struggle.',
+      name: 'Searching algorithm race',
+      topic: ['Searching', '/searching'],
+    })
+  }
+
+  const search = path.startsWith('/searching/') ? searchById(path.slice('/searching/'.length)) : undefined
+  if (search) return searchHead(search)
 
   const algo = path.startsWith('/sorting/') ? byId(path.slice('/sorting/'.length)) : undefined
   if (algo) return algoHead(algo)

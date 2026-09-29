@@ -15,5 +15,4 @@ export function render(url: string): string {
 }
 
 export { allRoutes, headFor, headHtml } from './seo'
-export { algoMarkdown, llmsFullTxt, llmsTxt, sitemapXml } from './llms'
-export { ALGORITHMS } from './topics/sorting/registry'
+export { llmsFullTxt, llmsTxt, markdownPages, sitemapXml } from './llms'

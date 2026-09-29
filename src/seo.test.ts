@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { llmsTxt, sitemapXml } from './llms'
+import { llmsFullTxt, llmsTxt, markdownPages, sitemapXml } from './llms'
 import { allRoutes, headFor, headHtml } from './seo'
 import { SITE_URL } from './site'
+import { SEARCH_GUIDE } from './topics/searching/guide'
+import { SEARCHES } from './topics/searching/registry'
 import { GUIDE } from './topics/sorting/guide'
 import { ALGORITHMS } from './topics/sorting/registry'
 
@@ -27,11 +29,13 @@ describe('seo', () => {
   it('keeps placeholders and unknown paths out of the index', () => {
     for (const { path } of allRoutes().filter((r) => r.priority == null)) expect(headFor(path).noindex, path).toBe(true)
     expect(headFor('/sorting/nope').noindex).toBe(true)
+    expect(headFor('/searching/nope').noindex).toBe(true)
     expect(headHtml(headFor('/nope'))).not.toContain('rel="canonical"')
   })
 
   it('has guide text for every algorithm', () => {
     for (const a of ALGORITHMS) expect(GUIDE[a.id]?.use, a.id).toBeTruthy()
+    for (const a of SEARCHES) expect(SEARCH_GUIDE[a.id]?.use, a.id).toBeTruthy()
   })
 
   it('lists every indexable page in the sitemap and every algorithm in llms.txt', () => {
@@ -39,5 +43,14 @@ describe('seo', () => {
     for (const { path } of indexable) expect(xml).toContain(`<loc>${path === '/' ? `${SITE_URL}/` : SITE_URL + path}</loc>`)
     const txt = llmsTxt()
     for (const a of ALGORITHMS) expect(txt).toContain(`${SITE_URL}/sorting/${a.id}`)
+    for (const a of SEARCHES) expect(txt).toContain(`${SITE_URL}/searching/${a.id}`)
+    for (const a of SEARCHES) expect(llmsFullTxt()).toContain(`## ${a.name}`)
+  })
+
+  it('writes a Markdown copy of every algorithm page', () => {
+    const paths = markdownPages().map(([p]) => p)
+    for (const a of ALGORITHMS) expect(paths).toContain(`sorting/${a.id}.md`)
+    for (const a of SEARCHES) expect(paths).toContain(`searching/${a.id}.md`)
+    expect(new Set(paths).size).toBe(paths.length)
   })
 })
