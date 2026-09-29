@@ -5,9 +5,7 @@ import { Topbar } from './components/Topbar'
 import { Home } from './pages/Home'
 import { NotFound } from './pages/NotFound'
 import { TopicPage } from './pages/TopicPage'
-import { RacePage } from './topics/sorting/RacePage'
-import { SortPage } from './topics/sorting/SortPage'
-import { SortingHub } from './topics/sorting/SortingHub'
+import { MODULES } from './topics'
 
 function ScrollManager() {
   const { pathname, hash } = useLocation()
@@ -27,11 +25,7 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          {/* Sorting */}
-          <Route path="/sorting" element={<SortingHub />} />
-          <Route path="/sorting/race" element={<RacePage />} />
-          <Route path="/sorting/:algo" element={<SortPage />} />
-          {/* New topics register their routes here. */}
+          {MODULES.flatMap((m) => m.routes.map((r) => <Route key={r.path} path={r.path} element={r.element} />))}
           <Route path="/:topic" element={<TopicPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
