@@ -5,6 +5,8 @@
  */
 import { TOPICS, topicById } from './catalog'
 import { abs, AUTHOR, OG_IMAGE, REPO_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from './site'
+import { graphById, GRAPHS } from './topics/graphs/registry'
+import type { GraphAlgorithm } from './topics/graphs/types'
 import { searchGuideFor } from './topics/searching/guide'
 import { searchById, SEARCHES } from './topics/searching/registry'
 import type { SearchAlgorithm } from './topics/searching/types'
@@ -41,6 +43,8 @@ export function allRoutes(): RouteEntry[] {
     { path: '/searching/race', priority: 0.7 },
     { path: '/trees', priority: 0.9 },
     ...TREES.map((t) => ({ path: `/trees/${t.id}`, priority: 0.8 })),
+    { path: '/graphs', priority: 0.9 },
+    ...GRAPHS.map((a) => ({ path: `/graphs/${a.id}`, priority: 0.8 })),
     // Planned topics render a placeholder; kept out of the index until they ship.
     ...TOPICS.filter((t) => t.status === 'soon').map((t) => ({ path: `/${t.id}` })),
   ]
@@ -112,6 +116,13 @@ export function treeDescription(t: TreeItem<unknown>) {
   return `${t.name} visualization: ${sentence(t.tagline)}. Insert, search and delete your own values and watch every step animated, with Python, JavaScript and C++ code.`
 }
 
+export function graphDescription(a: GraphAlgorithm) {
+  return `${a.name} visualization: ${sentence(a.tagline)}. Watch it explore a graph node by node${a.grid ? ' or draw walls on a grid' : ''}, with Python, JavaScript and C++ code. ${a.complexity.average}.`
+}
+
+const graphHead = (a: GraphAlgorithm) =>
+  learningHead({ path: `/graphs/${a.id}`, name: a.name, description: graphDescription(a), aka: a.guide.aka, wikipedia: a.guide.wikipedia, topic: ['Graphs', '/graphs'] })
+
 const treeHead = (t: TreeItem<unknown>) =>
   learningHead({ path: `/trees/${t.id}`, name: t.name, description: treeDescription(t), aka: t.guide.aka, wikipedia: t.guide.wikipedia, topic: ['Trees', '/trees'] })
 
@@ -178,7 +189,7 @@ export function headFor(pathname: string): Head {
   if (path === '/') {
     return {
       title: `Algorithm Visualizer: See Algorithms Animated Step by Step | ${SITE_NAME}`,
-      description: `${SITE_NAME} is a free, interactive algorithm visualizer. Watch ${ALGORITHMS.length} sorting and ${SEARCHES.length} searching algorithms and ${TREES.length} tree structures animate step by step, race them side by side, and follow Python, JavaScript and C++ code line by line.`,
+      description: `${SITE_NAME} is a free, interactive algorithm visualizer. Watch ${ALGORITHMS.length} sorting and ${SEARCHES.length} searching algorithms, ${TREES.length} tree structures and ${GRAPHS.length} graph algorithms animate step by step, race them side by side, and follow Python, JavaScript and C++ code line by line.`,
       canonical: abs('/'),
       jsonLd: [
         { ...website, description: SITE_DESCRIPTION, inLanguage: 'en', publisher: author },
@@ -197,6 +208,7 @@ export function headFor(pathname: string): Head {
             `${ALGORITHMS.length} animated sorting algorithms`,
             `${SEARCHES.length} animated searching algorithms, including binary and interpolation search`,
             'Interactive binary search tree, AVL tree, trie and segment tree with your own values',
+            'BFS, DFS, topological sort, components, cycle detection and bipartite check, plus BFS / DFS on a grid you draw',
             'Step forward and backward through every compare, swap and write',
             'Race mode: run several sorting or searching algorithms on the same input',
             'Python, JavaScript and C++ code synced to the animation',
@@ -263,6 +275,20 @@ export function headFor(pathname: string): Head {
       topic: 'Trees',
     })
   }
+
+  if (path === '/graphs') {
+    return hubHead({
+      path,
+      title: `Graph Algorithm Visualizer: BFS, DFS, Topological Sort | ${SITE_NAME}`,
+      description: `Visualize breadth-first search, depth-first search, topological sort, connected components, cycle detection and bipartite checks. Run BFS and DFS on a grid you draw, step by step.`,
+      name: 'Graph algorithm visualizer',
+      items: GRAPHS.map((a) => ({ name: a.name, path: `/graphs/${a.id}` })),
+      topic: 'Graphs',
+    })
+  }
+
+  const graphAlgo = path.startsWith('/graphs/') ? graphById(path.slice('/graphs/'.length)) : undefined
+  if (graphAlgo) return graphHead(graphAlgo)
 
   const tree = path.startsWith('/trees/') ? treeById(path.slice('/trees/'.length)) : undefined
   if (tree) return treeHead(tree)

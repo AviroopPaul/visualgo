@@ -12,10 +12,11 @@ An independent project, not affiliated with VisuAlgo (visualgo.net).
 - **Sorting:** 19 algorithms, race mode, custom input, sound.
 - **Searching:** linear, jump, binary, ternary, exponential and interpolation search. Click any bar to hunt for its value; race them by probe count.
 - **Trees:** binary search tree (insert / search / delete), AVL tree with animated rotations, in- / pre- / post- / level-order traversal, trie and segment tree. Type your own values and watch each operation.
+- **Graphs:** BFS, DFS, topological sort (Kahn), connected components, cycle detection and bipartite check on preset or random graphs; BFS and DFS also run on a grid where you draw walls and drag the start and goal.
 
 Every algorithm comes with Python, JavaScript and C++ code synced to the animation (Python by default).
 
-**Next:** BFS / DFS, heaps, shortest paths & MST, linear structures, hashing, dynamic programming (placeholders are already in the app).
+**Next:** heaps, shortest paths & MST, linear structures, hashing, dynamic programming (placeholders are already in the app).
 
 ## Run it
 
@@ -42,6 +43,7 @@ src/
     index.ts         live topic modules: routes + home-page shelf
     searching/       SearchTracer, SearchStage (probe beams, window, target line), 6 algorithms
     trees/           TreeRecorder, TreeStage (JS-tweened nodes + edges), 5 interactive items
+    graphs/          GraphRecorder, GraphStage (edge pulses, arrows), GridStage (drawable walls), 6 algorithms
     sorting/
       tracer.ts      records SortFrames (main row, scratch row, buckets, heap size, pointers)
       SortStage.tsx  draws a frame: bars, scratch tray, buckets, heap tree

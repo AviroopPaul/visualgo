@@ -5,6 +5,7 @@ import { SITE_URL } from './site'
 import { SEARCH_GUIDE } from './topics/searching/guide'
 import { SEARCHES } from './topics/searching/registry'
 import { GUIDE } from './topics/sorting/guide'
+import { GRAPHS } from './topics/graphs/registry'
 import { TREES } from './topics/trees/registry'
 import { ALGORITHMS } from './topics/sorting/registry'
 
@@ -32,6 +33,7 @@ describe('seo', () => {
     expect(headFor('/sorting/nope').noindex).toBe(true)
     expect(headFor('/searching/nope').noindex).toBe(true)
     expect(headFor('/trees/nope').noindex).toBe(true)
+    expect(headFor('/graphs/nope').noindex).toBe(true)
     expect(headHtml(headFor('/nope'))).not.toContain('rel="canonical"')
   })
 
@@ -49,6 +51,8 @@ describe('seo', () => {
     for (const a of SEARCHES) expect(llmsFullTxt()).toContain(`## ${a.name}`)
     for (const t of TREES) expect(txt).toContain(`${SITE_URL}/trees/${t.id}`)
     for (const t of TREES) expect(llmsFullTxt()).toContain(`## ${t.name}`)
+    for (const a of GRAPHS) expect(txt).toContain(`${SITE_URL}/graphs/${a.id}`)
+    for (const a of GRAPHS) expect(llmsFullTxt()).toContain(`## ${a.name}`)
   })
 
   it('writes a Markdown copy of every algorithm page', () => {
@@ -56,6 +60,7 @@ describe('seo', () => {
     for (const a of ALGORITHMS) expect(paths).toContain(`sorting/${a.id}.md`)
     for (const a of SEARCHES) expect(paths).toContain(`searching/${a.id}.md`)
     for (const t of TREES) expect(paths).toContain(`trees/${t.id}.md`)
+    for (const a of GRAPHS) expect(paths).toContain(`graphs/${a.id}.md`)
     expect(new Set(paths).size).toBe(paths.length)
   })
 })

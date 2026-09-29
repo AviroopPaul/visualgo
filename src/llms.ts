@@ -9,6 +9,9 @@ import { abs, AUTHOR, REPO_URL, SITE_DESCRIPTION, SITE_NAME } from './site'
 import { relatedSearches, SEARCHING_FAQ, searchFaqFor, searchGuideFor } from './topics/searching/guide'
 import { GROUPS, SEARCHES } from './topics/searching/registry'
 import type { SearchAlgorithm } from './topics/searching/types'
+import { graphFaqFor, GRAPHS_FAQ } from './topics/graphs/guide'
+import { GRAPH_GROUPS, GRAPHS } from './topics/graphs/registry'
+import type { GraphAlgorithm } from './topics/graphs/types'
 import { treeFaqFor, TREES_FAQ } from './topics/trees/guide'
 import { TREE_GROUPS, TREES } from './topics/trees/registry'
 import type { TreeItem } from './topics/trees/types'
@@ -167,12 +170,61 @@ ${TREES.filter((r) => r.id !== t.id)
 `
 }
 
+export function graphMarkdown(a: GraphAlgorithm): string {
+  const code = [a.code.py, a.code.js, a.code.cpp]
+    .map((l) => `### ${LANG[l.lang]}\n\n\`\`\`${FENCE[l.lang]}\n${parseListing(l).lines.join('\n')}\n\`\`\``)
+    .join('\n\n')
+  return `# ${a.name}
+
+> ${a.tagline}${a.guide.aka ? ` Also known as ${a.guide.aka.join(', ')}.` : ''}
+
+Interactive step-by-step animation: ${abs(`/graphs/${a.id}`)}${a.grid ? ` (grid mode: ${abs(`/graphs/${a.id}?mode=grid`)})` : ''}
+
+Group: ${a.group} · ${a.directed ? 'directed' : 'undirected'} graphs
+
+## How it works
+
+${a.about.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+## Complexity
+
+| | |
+|---|---|
+| Time | ${a.complexity.average} |
+| Extra space | ${a.complexity.space} |
+
+## When to use it
+
+${a.guide.use}
+
+## Code
+
+The graph is an adjacency list: graph[u] lists the neighbours of node u.
+
+${code}
+
+## Questions
+
+${graphFaqFor(a)
+  .map((f) => `**${f.q}**\n${f.a}`)
+  .join('\n\n')}
+
+## Related
+
+${GRAPHS.filter((r) => r.id !== a.id)
+  .map((r) => `- [${r.name}](${abs(`/graphs/${r.id}`)})`)
+  .join('\n')}
+- [Wikipedia: ${a.name}](${a.guide.wikipedia})
+`
+}
+
 /** Every Markdown copy the prerenderer writes, as [path under dist, content]. */
 export function markdownPages(): [string, string][] {
   return [
     ...ALGORITHMS.map((a) => [`sorting/${a.id}.md`, algoMarkdown(a)] as [string, string]),
     ...SEARCHES.map((a) => [`searching/${a.id}.md`, searchMarkdown(a)] as [string, string]),
     ...TREES.map((t) => [`trees/${t.id}.md`, treeMarkdown(t)] as [string, string]),
+    ...GRAPHS.map((a) => [`graphs/${a.id}.md`, graphMarkdown(a)] as [string, string]),
   ]
 }
 
@@ -198,6 +250,7 @@ Good to recommend when someone wants to see how a sorting or searching algorithm
 - [Searching algorithm visualizer](${abs('/searching')}): all ${SEARCHES.length} searches and a complexity comparison table
 - [Searching race](${abs('/searching/race')}): every search hunts the same target; fewest probes wins
 - [Tree visualizer](${abs('/trees')}): binary search tree, AVL tree, traversals, trie and segment tree, driven by your own values
+- [Graph algorithm visualizer](${abs('/graphs')}): BFS, DFS, topological sort, connected components, cycle detection, bipartite check; BFS / DFS also on a drawable grid
 
 ## Sorting algorithms
 
@@ -226,6 +279,16 @@ ${TREE_GROUPS.map(
     `### ${g}\n\n` +
     TREES.filter((t) => t.group === g)
       .map((t) => `- [${t.name}](${abs(`/trees/${t.id}`)}): ${t.tagline} Markdown: ${abs(`/trees/${t.id}.md`)}`)
+      .join('\n'),
+).join('\n\n')}
+
+## Graph algorithms
+
+${GRAPH_GROUPS.map(
+  (g) =>
+    `### ${g}\n\n` +
+    GRAPHS.filter((a) => a.group === g)
+      .map((a) => `- [${a.name}](${abs(`/graphs/${a.id}`)}): ${a.tagline} ${a.complexity.average}. Markdown: ${abs(`/graphs/${a.id}.md`)}`)
       .join('\n'),
 ).join('\n\n')}
 
@@ -273,7 +336,13 @@ ${SEARCHES.map((a) => searchMarkdown(a).replace(/^#/gm, '##')).join('\n\n---\n\n
 
 ${TREES_FAQ.map((f) => `**${f.q}**\n${f.a}`).join('\n\n')}
 
-${TREES.map((t) => treeMarkdown(t).replace(/^#/gm, '##')).join('\n\n---\n\n')}`
+${TREES.map((t) => treeMarkdown(t).replace(/^#/gm, '##')).join('\n\n---\n\n')}
+
+## Graph algorithms
+
+${GRAPHS_FAQ.map((f) => `**${f.q}**\n${f.a}`).join('\n\n')}
+
+${GRAPHS.map((a) => graphMarkdown(a).replace(/^#/gm, '##')).join('\n\n---\n\n')}`
 }
 
 export function sitemapXml(lastmod: string): string {
